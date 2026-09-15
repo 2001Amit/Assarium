@@ -1,0 +1,37 @@
+# Databricks Asset Bundle for Assarium
+# See https://docs.databricks.com/dev-tools/bundles/index.html
+
+bundle:
+  name: assarium
+
+variables:
+  environment:
+    description: "Deployment environment (e.g., dev, prod)"
+    default: dev
+
+workspace:
+  host: ${workspace.host}
+
+targets:
+  dev:
+    workspace:
+      host: https://adb-xxxxx.x.azuredatabricks.net
+    default: true
+    mode: development
+
+  prod:
+    workspace:
+      host: https://adb-yyyyy.y.azuredatabricks.net
+    mode: production
+
+resources:
+  jobs:
+    # Example definition for a Delta Live Tables or scheduled job
+    # The actual execution happens via the Python API, but we can deploy
+    # shared resources or maintenance jobs via bundles.
+    maintenance_job:
+      name: "Assarium Maintenance"
+      tasks:
+        - task_key: optimize
+          spark_python_task:
+            python_file: ../../apps/api/app/scripts/maintenance.py

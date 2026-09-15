@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+#
+# Assarium — one command, runnable from anywhere in the repo.
+#
+#   ./assarium start     start both API and web
+#   ./assarium api       start just the API          (foreground)
+#   ./assarium web       start just the web app      (foreground)
+#   ./assarium stop      stop both
+#   ./assarium status    what is running, and where
+#   ./assarium verify    55 end-to-end assertions
+#   ./assarium demo      seed the demo data and leave it in place
+#   ./assarium logs      tail the API log
+#
+# Add --restart to `api`, `web` or `start` to take a busy port over.
+#
+set -uo pipefail
+
+# Resolve the repo root from this script's own location, following symlinks, so the
+# caller's working directory never matters.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+API_PORT="${ASSARIUM_API_PORT:-8000}"
+WEB_PORT="${ASSARIUM_WEB_PORT:-3000}"
+LOG_DIR="${TMPDIR:-/tmp}"
+
+holder() { lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null | head -1; }
+
+usage() {
+  # Print the comment header as the help text, so the two can never drift apart.
+  sed -n '3,14p' "$0" | sed 's/^#\{1\} \{0,1\}//'
+}
+
+case "${1:-help}" in
+  api)
+    shift; exec "$ROOT/start-api.sh" "$@" ;;
+
+  web)
+    shift; exec "$ROOT/start-web.sh" "$@" ;;
+
+  start)
+    shift
+    echo "Starting both services in the background..."
+    nohup "$ROOT/start-api.sh" "$@" > "$LOG_DIR/assarium-api.log" 2>&1 &
+    nohup "$ROOT/start-web.sh" "$@" > "$LOG_DIR/assarium-web.log" 2>&1 &
+    # Wait for the API rather than guessing at a sleep duration.
+    for _ in $(seq 1 40); do
+      curl -fsS --max-time 1 "http://127.0.0.1:$API_PORT/api/health" >/dev/null 2>&1 && break
+      sleep 0.5
+    done
+    for _ in $(seq 1 60); do
+      curl -fsS --max-time 1 "http://localhost:$WEB_PORT" >/dev/null 2>&1 && break
+      sleep 0.5
+    done
+    exec "$0" status ;;
+
+  stop)
+    exec "$ROOT/stop.sh" ;;
+
+  verify)
+    exec "$ROOT/verify.sh" ;;
+
+  demo)
+    # Seeds the demo data and leaves it in place. `verify` cleans up after itself, so
+    # it proves the build works but leaves nothing to show.
+    cd "$ROOT/apps/api" && PYTHONPATH=tests exec ./.venv/bin/python tests/seed.py ;;
+
+  logs)
+    tail -f "$LOG_DIR/assarium-api.log" ;;
+
+  status)
+    api_pid="$(holder "$API_PORT")"
+    web_pid="$(holder "$WEB_PORT")"
+    if [ -n "$api_pid" ] && curl -fsS --max-time 2 "http://127.0.0.1:$API_PORT/api/health" >/dev/null 2>&1; then
+      echo "  API   running   http://127.0.0.1:$API_PORT   (pid $api_pid)"
+    elif [ -n "$api_pid" ]; then
+      echo "  API   port $API_PORT held by something else (pid $api_pid)"
+    else
+      echo "  API   not running          ./assarium api"
+    fi
+    if [ -n "$web_pid" ]; then
+      echo "  Web   running   http://localhost:$WEB_PORT   (pid $web_pid)"
+    else
+      echo "  Web   not running          ./assarium web"
+    fi
+    echo
+    echo "  Data  ${ASSARIUM_DATA_DIR:-$HOME/.assarium}"
+    ;;
+
+  help|-h|--help) usage ;;
+  *) echo "Unknown command: $1"; echo; usage; exit 1 ;;
+esac

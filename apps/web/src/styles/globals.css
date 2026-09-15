@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Assarium design tokens
+
+   Restrained, information-dense, built for long sessions in front of data.
+   Hairline borders carry structure instead of shadows; the accent appears at
+   most once or twice per screen so it still means something when it does.
+   ========================================================================== */
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Neutral ramp — a custom cool-grey, not a stock scale. */
+  --color-ink-0: #ffffff;
+  --color-ink-25: #fbfbfc;
+  --color-ink-50: #f7f7f8;
+  --color-ink-100: #eeeef0;
+  --color-ink-200: #e3e3e7;
+  --color-ink-300: #cfcfd6;
+  --color-ink-400: #a8aab3;
+  --color-ink-500: #8a8c95;
+  --color-ink-600: #5e6068;
+  --color-ink-700: #3f4148;
+  --color-ink-800: #26272c;
+  --color-ink-850: #1b1c20;
+  --color-ink-900: #121316;
+  --color-ink-950: #0a0b0d;
+
+  /* Accent — deep indigo. Used for focus, selection and exactly one primary action. */
+  --color-accent-100: #e6e7fb;
+  --color-accent-300: #a9adf0;
+  --color-accent-500: #5a5fe0;
+  --color-accent-600: #4a4fce;
+  --color-accent-700: #3c40ab;
+
+  /* Status. Desaturated so a dense table never turns into a traffic light. */
+  --color-positive: #2f7d5e;
+  --color-positive-soft: #e7f2ed;
+  --color-caution: #96712a;
+  --color-caution-soft: #f6efdd;
+  --color-critical: #b4453a;
+  --color-critical-soft: #fbeae8;
+  --color-info: #3a6fa8;
+  --color-info-soft: #e8f0f8;
+
+  /* Medallion layer identity — muted metals, never literal orange/grey/yellow. */
+  --color-bronze: #a0704a;
+  --color-silver: #6f8394;
+  --color-gold: #927a38;
+}
+
+/* --------------------------------------------------------------------------
+   Semantic surface variables, themed.
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+  --canvas: var(--color-ink-50);
+  --surface: var(--color-ink-0);
+  --surface-sunken: var(--color-ink-100);
+  --surface-hover: var(--color-ink-50);
+  --line: var(--color-ink-200);
+  --line-strong: var(--color-ink-300);
+  --text: var(--color-ink-900);
+  --text-muted: var(--color-ink-600);
+  --text-subtle: var(--color-ink-500);
+  --accent: #4F46E5; /* Vibrant Indigo-600 */
+  --accent-contrast: #ffffff;
+  --accent-soft: #EEF2FF; /* Indigo-50 */
+  --focus: #6366F1; /* Indigo-500 */
+  --nav: var(--color-ink-0);
+
+  /* ------------------------------------------------------------------------
+     Chart palette.
+
+     Validated with the dataviz validator against both surfaces, not eyeballed:
+     lightness band, chroma floor, adjacent-pair CVD separation, normal-vision
+     floor and contrast all pass in light and dark. The slot ORDER is the
+     colourblind-safety mechanism - reordering these invalidates the result.
+     Assign by fixed slot; never cycle, never generate a ninth.
+
+     Three light slots sit under 3:1 on white, so the relief rule applies:
+     every chart tile ships a table view.
+     ------------------------------------------------------------------------ */
+  --series-1: #4a4fce;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #2a78d6;
+  --series-8: #e34948;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #09090b; /* Deep OLED-friendly black */
+  --surface: #121214;
+  --surface-sunken: #0c0c0e;
+  --surface-hover: #18181b;
+  --line: #27272a;
+  --line-strong: #3f3f46;
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
+  --accent: #6366f1; /* Vibrant Indigo-500 */
+  --accent-contrast: #ffffff;
+  --accent-soft: #312e81; /* Indigo-900 */
+  --focus: #818cf8; /* Indigo-400 */
+  --nav: #09090b;
+
+  /* Re-stepped for the dark surface and validated as a set against #121214,
+     not flipped from the light values. */
+  --series-1: #7a7ff0;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #3987e5;
+  --series-8: #e66767;
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+* {
+  border-color: var(--line);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv05" 1, "ss01" 1;
+}
+
+/* Numbers must line up in every table, KPI and axis. */
+.tnum,
+table,
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+/* Deliberately thin scrollbars — dense screens should not lose width to chrome. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Utilities used across the app
+   -------------------------------------------------------------------------- */
+
+@utility surface-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+@utility hairline-grid {
+  background-image: linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.fade-in {
+  animation: fade-in 140ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility shadow-glow {
+  box-shadow: 0 0 15px -3px var(--accent);
+}

@@ -1,0 +1,7 @@
+<svg viewBox="0 0 16 16" width="256" height="256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Exact colors and dimensions from Assarium AppShell -->
+  
+  <rect x="1" y="11.5" width="14" height="2" rx="1" fill="#a0704a" />
+  <rect x="3" y="7" width="10" height="2" rx="1" fill="#6f8394" />
+  <rect x="5" y="2.5" width="6" height="2" rx="1" fill="#927a38" />
+</svg>

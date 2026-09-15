@@ -1,0 +1,64 @@
+# ---------------------------------------------------------------------------------
+# Secrets. Nothing in here may ever reach a remote.
+# ---------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.pfx
+*.p12
+*.crt
+secret.key
+service-account*.json
+credentials*.json
+
+# ---------------------------------------------------------------------------------
+# Dependencies and build output
+# ---------------------------------------------------------------------------------
+node_modules/
+.next/
+out/
+dist/
+build/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# ---------------------------------------------------------------------------------
+# Tooling caches
+# ---------------------------------------------------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.tsbuildinfo
+.turbo/
+
+# ---------------------------------------------------------------------------------
+# Runtime state
+#
+# The platform keeps its metadata DB, uploads and medallion warehouse in ~/.assarium,
+# outside the repo. These patterns catch a stray local copy.
+# ---------------------------------------------------------------------------------
+.assarium/
+*.duckdb
+*.duckdb.wal
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# ---------------------------------------------------------------------------------
+# Editor and OS
+# ---------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
