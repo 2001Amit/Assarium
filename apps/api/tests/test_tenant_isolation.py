@@ -322,6 +322,16 @@ class TestChildObjectIsolation:
         as_beta(env)
         assert env.client.get(f"/api/dashboards/{dashboard.id}").status_code == 404
 
+    def test_a_dashboards_freshness_is_not_readable_by_id(self, env, alpha_connection):
+        """When a pipeline last ran tells a stranger how busy someone else's business is."""
+        dashboard = env.seed(
+            DashboardRecord, tenant_id=ALPHA, connection_id=alpha_connection.id,
+            name="Portfolio", document={"id": "d1", "name": "Portfolio", "tiles": []},
+        )
+        as_beta(env)
+        response = env.client.get(f"/api/dashboards/{dashboard.id}/freshness")
+        assert response.status_code == 404
+
     def test_a_dashboard_cannot_be_overwritten_across_tenants(self, env, alpha_connection):
         dashboard = env.seed(
             DashboardRecord, tenant_id=ALPHA, connection_id=alpha_connection.id,
@@ -569,6 +579,19 @@ class TestOwnTenantStillWorks:
         response = env.client.get(f"/api/dashboards/{dashboard.id}")
         assert response.status_code == 200, response.text
         assert response.json()["name"] == "Portfolio"
+
+    def test_reading_your_own_dashboards_freshness_works(self, env, alpha_connection):
+        dashboard = env.seed(
+            DashboardRecord, tenant_id=ALPHA, connection_id=alpha_connection.id,
+            name="Portfolio",
+            document={"id": "d1", "connection_id": alpha_connection.id,
+                      "name": "Portfolio", "tiles": []},
+        )
+        response = env.client.get(f"/api/dashboards/{dashboard.id}/freshness")
+        assert response.status_code == 200, response.text
+        # No schedule seeded, so there is no cadence to judge against. "unknown" rather
+        # than a guess is the whole point.
+        assert response.json()["status"] == "unknown"
 
     def test_listing_your_own_dashboards_works(self, env, alpha_connection):
         env.seed(DashboardRecord, tenant_id=ALPHA, connection_id=alpha_connection.id,

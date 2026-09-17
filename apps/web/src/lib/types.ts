@@ -455,6 +455,17 @@ export interface Dashboard {
   notes: string[];
 }
 
+/** Judged server-side against the connection's own schedule, never a fixed threshold. */
+export type FreshnessStatus = "fresh" | "late" | "stale" | "unknown";
+
+export interface DashboardFreshness {
+  status: FreshnessStatus;
+  finished_at: string | null;
+  age_seconds: number | null;
+  /** Actionable, and null only when status is "fresh". */
+  reason: string | null;
+}
+
 export interface DashboardSummary {
   id: string;
   connection_id: string;

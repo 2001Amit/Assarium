@@ -20,12 +20,14 @@ import type {
   Connection,
   Dashboard,
   DashboardData,
+  DashboardFreshness,
   DashboardSummary,
   MetricFilter,
   SemanticModel,
 } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { DashboardGrid } from "@/components/dashboards/DashboardGrid";
+import { FreshnessBadge } from "@/components/dashboards/FreshnessBadge";
 import { FilterBar } from "@/components/dashboards/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
@@ -97,6 +99,21 @@ function DashboardWorkspace() {
         filters,
       }),
     enabled: Boolean(activeDashboardId),
+  });
+
+  // How old the numbers are. Kept apart from the dashboard definition because it is a
+  // fact about the data, not about the dashboard - and because the definition is written
+  // back on save, which would freeze a verdict that is only true for a moment.
+  const { data: freshness } = useQuery({
+    queryKey: ["dashboard-freshness", activeDashboardId],
+    queryFn: () =>
+      api.get<DashboardFreshness>(
+        `/api/dashboards/${activeDashboardId}/freshness`,
+      ),
+    enabled: Boolean(activeDashboardId),
+    // Re-asked on an interval so a dashboard left open on a wall display goes amber by
+    // itself. Without this it would keep whatever verdict it was given at page load.
+    refetchInterval: 60_000,
   });
 
   // Generate dashboard.
@@ -401,12 +418,15 @@ function DashboardWorkspace() {
             </div>
           )}
 
-          {/* Elapsed */}
-          <div className="flex items-center justify-between px-4 pt-3">
-            <p className="text-[11px] text-[var(--text-subtle)]">
-              {dashboard.tiles.length} tile{dashboard.tiles.length !== 1 ? "s" : ""} ·{" "}
-              {dashboardData.elapsed_ms}ms
-            </p>
+          {/* Elapsed, and how old the numbers behind it are */}
+          <div className="flex items-center justify-between gap-3 px-4 pt-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="shrink-0 text-[11px] text-[var(--text-subtle)]">
+                {dashboard.tiles.length} tile{dashboard.tiles.length !== 1 ? "s" : ""} ·{" "}
+                {dashboardData.elapsed_ms}ms
+              </p>
+              {freshness && <FreshnessBadge freshness={freshness} />}
+            </div>
             {loadingData && (
               <RefreshCw className="size-3 animate-spin text-[var(--text-subtle)]" />
             )}

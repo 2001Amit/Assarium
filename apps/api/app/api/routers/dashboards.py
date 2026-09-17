@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.auth.deps import get_scope, get_tenant_context
 from app.core.errors import NotFoundError, ValidationError
+from app.dashboards.freshness import FreshnessStatus, dashboard_freshness
 from app.dashboards.generator import generate_dashboard
 from app.dashboards.runner import run_dashboard
 from app.dashboards.types import Dashboard, DashboardData
@@ -105,6 +106,42 @@ def list_dashboards(
 @router.get("/dashboards/{dashboard_id}", response_model=Dashboard)
 def get_dashboard(dashboard_id: str, scope: TenantScope = Depends(get_scope)) -> Dashboard:
     return _dashboard(scope.get(DashboardRecord, dashboard_id))
+
+
+class FreshnessRead(BaseModel):
+    """
+    How old a dashboard's data is, and why that is or is not a problem.
+
+    Deliberately a resource of its own rather than a field on `Dashboard`. The dashboard
+    document is round-tripped through `save_dashboard`, which writes whatever it is given
+    straight back into storage - so a freshness verdict carried on that model would be
+    persisted at save time and then served for ever as though it were current. That is
+    precisely the stale-number-that-looks-live failure this endpoint exists to report, and
+    a rule somebody has to remember is a weaker defence than a shape that cannot express
+    the mistake.
+
+    `age_seconds` is measured against the server's clock and travels with the verdict, so
+    a caller can see what the status was decided on rather than taking it on trust.
+    """
+
+    status: FreshnessStatus
+    finished_at: datetime | None
+    age_seconds: float | None
+    #: Actionable, and absent only when the status is `fresh`.
+    reason: str | None
+
+
+@router.get("/dashboards/{dashboard_id}/freshness", response_model=FreshnessRead)
+def get_dashboard_freshness(
+    dashboard_id: str, scope: TenantScope = Depends(get_scope)
+) -> FreshnessRead:
+    result = dashboard_freshness(scope, dashboard_id)
+    return FreshnessRead(
+        status=result.status,
+        finished_at=result.finished_at,
+        age_seconds=result.age.total_seconds() if result.age is not None else None,
+        reason=result.reason,
+    )
 
 
 @router.put("/dashboards/{dashboard_id}", response_model=Dashboard)
